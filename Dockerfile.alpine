@@ -17,7 +17,7 @@ RUN tar -zxvf tengine-$TENGINE_VERSION.tar.gz \
 --with-http_gzip_static_module \
 --with-http_ssl_module \
 --add-module=./modules/ngx_http_upstream_dyups_module \
---add-module=modules/ngx_http_upstream_check_module/ ' \
+--add-module=./modules/ngx_http_upstream_check_module/ ' \
     && make \
     && make install \
     && /bin/bash -c 'mkdir -p /home/nginx/conf/conf.d' 
