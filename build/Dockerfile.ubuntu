@@ -1,0 +1,52 @@
+FROM ubuntu:20.04 as builder
+
+RUN apt-get update \
+    && apt-get -y install zlib1g-dev openssl libssl-dev libpcre3 libpcre3-dev gcc g++ make wget\
+    &&  cd /opt \
+    && wget https://tengine.taobao.org/download/tengine-2.3.3.tar.gz \
+    && wget https://nchc.dl.sourceforge.net/project/pcre/pcre/8.37/pcre-8.37.tar.gz \
+    && tar -zxvf  pcre-8.37.tar.gz \
+    && cd pcre-8.37 \
+    && /bin/bash -c 'mkdir -p /etc/nginx' \
+    && ./configure --enable-utf8 \
+    && make \
+    && make install \
+    && cd /opt \
+    && tar -zxvf tengine-2.3.3.tar.gz \
+    && cd /opt/tengine-2.3.3 \
+    && mv /opt/pcre-8.37 /etc/nginx/pcre-8.37 \
+    && /bin/bash -c './configure --prefix=/etc/nginx \
+--with-http_stub_status_module \
+--with-stream \
+--with-pcre=/etc/nginx/pcre-8.37 \
+--with-http_realip_module \
+--with-http_gzip_static_module \
+--with-http_ssl_module \
+--add-module=modules/ngx_http_upstream_check_module/ ' \
+    && make \
+    && make install \
+    && /bin/bash -c 'mkdir -p /etc/nginx/conf.d' \
+    && /bin/bash -c 'mkdir -p /etc/nginx/dpkg' \
+    && chown -R _apt /etc/nginx/dpkg \
+    && cd /etc/nginx/dpkg \
+    && apt-get download libssl1.1 libssl-dev  openssl libinotifytools0 inotify-tools tzdata
+COPY nginx.conf /etc/nginx/conf/nginx.conf
+COPY start.sh auto-reload.sh /etc/nginx/sbin/
+
+#二次构建
+FROM ubuntu:20.04
+WORKDIR /etc/nginx
+COPY --from=builder /etc/nginx /etc/nginx
+RUN  chown -R www-data:www-data /etc/nginx \
+	&& chmod +x /etc/nginx/sbin/* \
+    && export DEBIAN_FRONTEND=noninteractive \
+    && dpkg -i /etc/nginx/dpkg/*.deb \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
+    && rm -rf /etc/nginx/dpkg
+ENV NGINX_HOME /etc/nginx
+ENV PATH $PATH:$NGINX_HOME/sbin
+VOLUME [ "/etc/nginx/conf.d" ]
+EXPOSE 80 443
+CMD ["/etc/nginx/sbin/start.sh"]
