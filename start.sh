@@ -1,3 +1,3 @@
 #! /bin/bash
-/home/nginx/sbin/nginx -g "daemon off;" &
-/home/nginx/sbin/auto-reload.sh
+/www/nginx/sbin/nginx -g "daemon off;" &
+/www/nginx/sbin/auto-reload.sh
