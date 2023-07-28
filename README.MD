@@ -14,7 +14,13 @@ docker build -t tengine .
 目前默认打包的 Tengine 版本号是 3.0.0，如果需要打包其他版本，可以在打包时传入版本号参数，比如：
 
 ```
-docker build -t tengine --build-arg TENGINE_VERSION=2.4.1 .
+docker build -t tengine:2.4.1 --build-arg TENGINE_VERSION=2.4.1 .
+```
+
+打包并推送到 Docker Hub
+
+```
+docker buildx build --platform linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6 -t ethanarcher/tengine:3.0.0 --build-arg TENGINE_VERSION=3.0.0  --push .
 ```
 
 ### 编译细节
